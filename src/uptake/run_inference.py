@@ -7,17 +7,17 @@ Usage:
 python run_inference.py --data_file data/uptake_data.csv --speakerA student_text --speakerB teacher_text --output_col uptake_predictions --output predictions/uptake_data_predictions.csv
 
 """
-
-from argparse import ArgumentParser
 import string
 import re
-from scipy.special import softmax
-import pandas as pd
+from argparse import ArgumentParser
 
-from utils import clean_str, clean_str_nopunct
+import pandas as pd
 import torch
+from scipy.special import softmax
 from transformers import BertTokenizer
-from utils import MultiHeadModel, BertInputBuilder
+
+from uptake.utils import BertInputBuilder, clean_str, clean_str_nopunct
+from uptake.models import MultiHeadModel
 
 punct_chars = list((set(string.punctuation) | {'’', '‘', '–', '—', '~', '|', '“', '”', '…', "'", "`", '_'}))
 punct_chars.sort()
@@ -52,6 +52,7 @@ def get_prediction(model, instance, device):
                    token_type_ids=instance["token_type_ids"],
                    return_pooler_output=False)
     return output
+
 
 def get_uptake_score(utterances, speakerA, speakerB, model, device, input_builder, max_length):
 
@@ -117,8 +118,6 @@ def main():
 
     utterances[args.output_col] = uptake_scores
     utterances.to_csv(args.output, index=False)
-
-
 
 
 if __name__ == "__main__":
