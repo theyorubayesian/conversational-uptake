@@ -1,27 +1,33 @@
+from typing import Dict
+
 import torch
 from torch import nn
 from torch.nn import MSELoss, CrossEntropyLoss
 from transformers.models.bert.modeling_bert import BertModel, BertPreTrainedModel
+from transformers import PretrainedConfig
 
 
 class MultiHeadModel(BertPreTrainedModel):
   """Pre-trained BERT model that uses our loss functions"""
 
-  def __init__(self, config, head2size):
+  def __init__(self, config: PretrainedConfig, head2size: Dict[str, int]):
     super(MultiHeadModel, self).__init__(config, head2size)
+
     config.num_labels = 1
     self.bert = BertModel(config)
     self.dropout = nn.Dropout(config.hidden_dropout_prob)
     module_dict = {}
+
     for head_name, num_labels in head2size.items():
       module_dict[head_name] = nn.Linear(config.hidden_size, num_labels)
+    
     self.heads = nn.ModuleDict(module_dict)
 
     self.init_weights()
 
   def forward(self, input_ids, token_type_ids=None, attention_mask=None,
               head2labels=None, return_pooler_output=False, head2mask=None,
-              nsp_loss_weights=None):
+              nsp_loss_weights=None) -> Dict[str, torch.Tensor]:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
